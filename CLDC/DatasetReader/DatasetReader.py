@@ -54,6 +54,7 @@ class DatasetReader:
     def get_dataset(self, filenames):
         AUTOTUNE = tf.data.experimental.AUTOTUNE
 
+        # filenames in format ['file1.tfrec', 'file2.tfrec'...]
         dataset = self._load_dataset(filenames)
         dataset = dataset.shuffle(2048)
         dataset = dataset.prefetch(buffer_size=AUTOTUNE)

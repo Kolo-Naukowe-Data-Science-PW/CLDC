@@ -7,7 +7,7 @@ def downloaded(path='Data_zip/'):
     return os.path.exists(os.path.join(path, 'cassava-leaf-disease-classification.zip'))
 
 
-def extracted(path='Data/'):
+def extracted(path='data/'):
     "Check if the ZIP file is already extracted."
 
     api = KaggleApi()
@@ -20,7 +20,7 @@ def extracted(path='Data/'):
     return True
 
 
-def load_data_from_kaggle(data_path='Data/', zip_path='Data_zip/'):
+def load_data_from_kaggle(data_path='data/', zip_path='Data_zip/'):
     "Import data from kaggle, unzip it, and store it in data folder"
 
     api = KaggleApi()

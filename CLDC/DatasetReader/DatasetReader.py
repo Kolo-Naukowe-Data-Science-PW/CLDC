@@ -1,10 +1,9 @@
 import tensorflow as tf
+from functools import partial
 
 
 class DatasetReader:
-    def __init__(self,  batch_size=16):
-        self.BATCH_SIZE = batch_size
-
+    def __init__(self):
         # default size in cassava dataset
         self.IMAGE_SIZE = [512, 512]
 
@@ -19,24 +18,31 @@ class DatasetReader:
 
         return image_raw
 
-    def _read_tfrecord(self, example):
+    def _read_tfrecord(self, example, labeled):
         # image feature keys inside tfrecord files
-        image_features = {
-        'target': tf.io.FixedLenFeature([], tf.int64),
-        'image': tf.io.FixedLenFeature([], tf.string),
-        }
+        if labeled:
+            image_features = {
+            'target': tf.io.FixedLenFeature([], tf.int64),
+            'image': tf.io.FixedLenFeature([], tf.string),
+            }
+        else:
+             image_features = {
+            'image': tf.io.FixedLenFeature([], tf.string),
+            }
 
         example = tf.io.parse_single_example(example, image_features)
 
         # image in Tensor format
         image = self._decode_image(example["image"])
+        
+        if labeled:
+            # class of decoded image
+            label = tf.cast(example["target"], tf.int32)
+            return image, label
 
-        # class of decoded image
-        label = tf.cast(example["target"], tf.int32)
+        return image
 
-        return image, label
-
-    def _load_dataset(self, filenames):
+    def _load_dataset(self, filenames, labeled):
         ignore_order = tf.data.Options()
 
         # disable order, increase speed
@@ -48,15 +54,28 @@ class DatasetReader:
         # uses data as soon as it streams in, rather than in its original order
         dataset = dataset.with_options(ignore_order)
 
-        # returns a dataset of (image, label) pairs 
-        return dataset.map(self._read_tfrecord)
+        # returns a dataset of (image, label) pairs if labeled=True. If False returns only image
+        return dataset.map(partial(self._read_tfrecord, labeled=labeled))
 
-    def get_dataset(self, filenames):
+    def get_dataset(self, filenames, batch_size=16, labeled=True):
+        """Return dataset from given file
+
+        Arguments:
+        filenames -- list of files to read
+        batch_size -- None or int. If None, dataset won't be batched.
+        labeled -- bool, default True and returns dataset as pairs of (image, label). If False returns only image
+
+        Returns:
+        dataset
+        """
+
         AUTOTUNE = tf.data.experimental.AUTOTUNE
 
-        # filenames in format ['file1.tfrec', 'file2.tfrec'...]
-        dataset = self._load_dataset(filenames)
+        dataset = self._load_dataset(filenames, labeled)
         dataset = dataset.shuffle(2048)
         dataset = dataset.prefetch(buffer_size=AUTOTUNE)
-        dataset = dataset.batch(self.BATCH_SIZE)
+
+        if labeled:
+            dataset = dataset.batch(batch_size)
+
         return dataset

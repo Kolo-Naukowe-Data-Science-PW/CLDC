@@ -58,7 +58,7 @@ class DatasetReader:
             dataset = dataset.batch(batch_size)
         return dataset
 
-    def get_splitted_dataset(self, filenames, dataset_size=21397, ratios=(70, 20, 10)):
+    def get_splitted_dataset(self, filenames, dataset_size=21397, ratios=(0.7, 0.2, 0.1)):
         """
         Loads and splits dataset at given ratio.
         :return: tuple (train_dataset, validation_dataset, test_dataset)

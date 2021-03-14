@@ -34,7 +34,7 @@ class DatasetReader:
 
         return image, label
 
-    def _load_dataset(self, filenames):
+    def _load_dataset(self, filenames, num_parallel_calls):
         ignore_order = tf.data.Options()
 
         # disable order, increase speed
@@ -47,11 +47,11 @@ class DatasetReader:
         dataset = dataset.with_options(ignore_order)
 
         # returns a dataset of (image, label) pairs
-        return dataset.map(self._read_tfrecord)
+        return dataset.map(self._read_tfrecord, num_parallel_calls=num_parallel_calls)
 
-    def get_dataset(self, filenames, shuffle_size=False, batch_size=False):
+    def get_dataset(self, filenames, shuffle_size=False, batch_size=False, num_parallel_calls=tf.data.experimental.AUTOTUNE):
         # filenames in format ['file1.tfrec', 'file2.tfrec'...]
-        dataset = self._load_dataset(filenames)
+        dataset = self._load_dataset(filenames, num_parallel_calls)
         if type(shuffle_size) is int:
             dataset = dataset.shuffle(shuffle_size)
         if type(batch_size) is int:
